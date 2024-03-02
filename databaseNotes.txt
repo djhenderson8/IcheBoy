@@ -1,0 +1,29 @@
+Database oragnized into tables
+
+CONFIG FILE: mysqld.cnf
+-change bind address and mysqlx-bind-address to 0.0.0.0
+
+
+User should always be mysql
+
+Default port is 3306/tcp
+
+% = from any machine
+localhost = just the host computer = 127.0.0.1
+
+sudo systemctl restart mysql RESTART TO APPLY CHANGES
+systemctl
+mysql -u betterblogUser -h 172.16.56.12 -p
+SHOW DATABASES;
+SELECT [DATABASE OR TABLE OR WHATEVER NAME];
+
+Place to set IP address:
+/etc/netplan/00-installer-config.yaml
+
+
+
+DNS stuff
+https://www.cherryservers.com/blog/how-to-install-and-configure-a-private-bind-dns-server-on-ubuntu-22-04
+
+
+??? How to set firewall rules to only allow Postgres port
