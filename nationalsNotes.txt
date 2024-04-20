@@ -1,0 +1,185 @@
+	***BEFORE USING SQL SCRIPT FIX 2ND REVOKE LINE, MOVE PERMISIONS STUFF TO BOTTOM, REMOVE STRAY COMMA, CHANGE PERIOD TO COMMA***
+	*CHECK FOR MALICIOUS POSTGRES USERS*
+	*CHECK .bashrc*
+
+	___ROCKY NOTES___
+
+	Package managers
+dnf: primary
+yum:
+rpm: low-level, does not automatically resolve dependencies
+
+	Set up SSH
+1. sudo yum install openssh-server
+2. sudo yum install openssh?
+3. >change settings in /etc/ssh/sshd_config
+4. systemctl start opensshd
+
+	Finding reverse/bind shells
+netstat -tulna >>SEE EXAMPLE<<
+sudo lsof -i >>SEE EXAMPLE<<ps 
+ps -aux
+>>USE FIND AND SEARCH CONTENTS OF ALL FILES THROUGHOUT THE SYSTEM TO FIND THE NAME OF THE REVERSE/BIND SHELL IN CASE THERE IS A CRONJOB THAT REESTABLISHES THE SHELL
+
+	File locks/pins
+List current file locks: lslocks
+Pins in Rocky: /etc/yum.conf and possibly more pins in /etc/yum directory
+If all else fails ask Macen how to use gdb
+
+	How to...
+Check Rocky Version: cat /etc/os-release
+Set Static IP Address: nmtui
+Get github files: wget [file URL] (https://shorturl.at/apwz3)
+mv [file name] [file name].sql
+	
+	System hardening
+>Make impossible to login as linux user postgresql - set !! password in shadow file
+>shadow, passwd, group, sudoers
+>/etc/ssh/sshd_config
+
+	Scripts
+Make executable: chmod +x [file name]
+Run script from same directory: ./[file name]
+Run script from anywhere: [full file path]
+
+	Postgres commands
+Create blueteam superuser: sudo -u postgres createuser -s blueteam
+Login as postgres user: sudo -i -u postgres
+Run command as postgres: sudo -u [command]
+Find postgres config file: SHOW config_file;
+Check users: SELECT * FROM pg_user;
+Other config file (in same directory as ^): pg_hba.conf
+Login remotely: psql -h [host IP] -p [port] -U [user] -d [database]
+createbd [db name]
+psql -d [db to login to]
+\q EXIT
+\l SHOW DATABASES
+
+	Postgres Enable remote login
+1. Find config file: SHOW config_file;
+2. In postgresql.conf change listen_addresses to '*'
+3. In pg_hba.conf change IPv4 line to host all all 0.0.0.0/0 md5
+4. Allow tcp traffic on port specified in postgresql.conf in firewall
+5. sudo systemctl restart postgresql
+HOW DO I GIVE POSTGRES USER A PASSWORD FOR REMOTE LOGIN?
+
+	Firewalld
+Allow tcp traffic on port 5432: sudo firewall-cmd --zone=public --add-port=5432/tcp
+
+
+
+
+
+
+	__EXAMPLE OUTPUT OF netstat -tulna__
+
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 192.168.122.1:53        0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.1:5432          0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN
+tcp        0     36 172.16.56.117:22        172.16.56.2:64459       ESTABLISHED
+tcp6       0      0 :::22                   :::*                    LISTEN
+tcp6       0      0 ::1:631                 :::*                    LISTEN
+tcp6       0      0 ::1:5432                :::*                    LISTEN
+tcp6       0      0 :::111                  :::*                    LISTEN
+udp        0      0 127.0.0.1:323           0.0.0.0:*
+udp        0      0 0.0.0.0:50127           0.0.0.0:*
+udp        0      0 0.0.0.0:5353            0.0.0.0:*
+udp        0      0 192.168.122.1:53        0.0.0.0:*
+udp        0      0 0.0.0.0:67              0.0.0.0:*
+udp        0      0 172.16.56.117:68        172.16.56.1:67          ESTABLISHED
+udp        0      0 0.0.0.0:111             0.0.0.0:*
+udp6       0      0 ::1:323                 :::*
+udp6       0      0 ::1:43501               ::1:43501               ESTABLISHED
+udp6       0      0 :::5353                 :::*
+udp6       0      0 :::51192                :::*
+udp6       0      0 :::111                  :::*
+
+
+	__EXAMPLE OUTPUT OF lsof -i__
+
+COMMAND      PID     USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+systemd        1     root   33u  IPv4   19050      0t0  TCP *:sunrpc (LISTEN)
+systemd        1     root   34u  IPv4   19051      0t0  UDP *:sunrpc
+systemd        1     root   35u  IPv6   19052      0t0  TCP *:sunrpc (LISTEN)
+systemd        1     root   36u  IPv6   19053      0t0  UDP *:sunrpc
+rpcbind      721      rpc    4u  IPv4   19050      0t0  TCP *:sunrpc (LISTEN)
+rpcbind      721      rpc    5u  IPv4   19051      0t0  UDP *:sunrpc
+rpcbind      721      rpc    6u  IPv6   19052      0t0  TCP *:sunrpc (LISTEN)
+rpcbind      721      rpc    7u  IPv6   19053      0t0  UDP *:sunrpc
+avahi-dae    767    avahi   12u  IPv4   23843      0t0  UDP *:mdns
+avahi-dae    767    avahi   13u  IPv6   23844      0t0  UDP *:mdns
+avahi-dae    767    avahi   14u  IPv4   23846      0t0  UDP *:50127
+avahi-dae    767    avahi   15u  IPv6   23847      0t0  UDP *:51192
+chronyd      770   chrony    5u  IPv4   23677      0t0  UDP localhost:323
+chronyd      770   chrony    6u  IPv6   23678      0t0  UDP localhost:323
+NetworkMa    809     root   27u  IPv4   26586      0t0  UDP localhost.localdomain:bootpc->_gateway:bootps
+sshd         817     root    3u  IPv4   25204      0t0  TCP *:ssh (LISTEN)
+sshd         817     root    4u  IPv6   25213      0t0  TCP *:ssh (LISTEN)
+cupsd        819     root    6u  IPv6   25251      0t0  TCP localhost:ipp (LISTEN)
+cupsd        819     root    7u  IPv4   25252      0t0  TCP localhost:ipp (LISTEN)
+dnsmasq     1579  dnsmasq    3u  IPv4   30829      0t0  UDP *:bootps
+dnsmasq     1579  dnsmasq    5u  IPv4   30832      0t0  UDP localhost.localdomain:domain
+dnsmasq     1579  dnsmasq    6u  IPv4   30833      0t0  TCP localhost.localdomain:domain (LISTEN)
+postmaste 146014 postgres    3u  IPv6  506786      0t0  TCP localhost:postgres (LISTEN)
+postmaste 146014 postgres    4u  IPv4  506787      0t0  TCP localhost:postgres (LISTEN)
+postmaste 146014 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146018 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146019 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146020 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146021 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146022 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+postmaste 146023 postgres   10u  IPv6  506807      0t0  UDP localhost:43501->localhost:43501
+sshd      310244     root    4u  IPv4 1122253      0t0  TCP localhost.localdomain:ssh->172.16.56.2:64459 (ESTABLISHED)
+sshd      310266 blueteam    4u  IPv4 1122253      0t0  TCP localhost.localdomain:ssh->172.16.56.2:64459 (ESTABLISHED)
+
+	__EXAMPLE SHADOW FILE__
+root:$6$7eOZ8ci.zavh0nSo$duYkEnRdMkISaJUgqn66I/bYlPLrwzLLG2AAe/uZqAz9BKjsjwDtwn0mjnifI3B./VEcXyRumWcBYTZL2QQD30::0:99999:7:::
+bin:*:19326:0:99999:7:::
+daemon:*:19326:0:99999:7:::
+adm:*:19326:0:99999:7:::
+lp:*:19326:0:99999:7:::
+sync:*:19326:0:99999:7:::
+shutdown:*:19326:0:99999:7:::
+halt:*:19326:0:99999:7:::
+mail:*:19326:0:99999:7:::
+operator:*:19326:0:99999:7:::
+games:*:19326:0:99999:7:::
+ftp:*:19326:0:99999:7:::
+nobody:*:19326:0:99999:7:::
+dbus:!!:19807::::::
+systemd-coredump:!!:19807::::::
+systemd-resolve:!!:19807::::::
+tss:!!:19807::::::
+polkitd:!!:19807::::::
+geoclue:!!:19807::::::
+unbound:!!:19807::::::
+rtkit:!!:19807::::::
+pipewire:!!:19807::::::
+pulse:!!:19807::::::
+dnsmasq:!!:19807::::::
+qemu:!!:19807::::::
+clevis:!!:19807::::::
+usbmuxd:!!:19807::::::
+gluster:!!:19807::::::
+rpc:!!:19807:0:99999:7:::
+avahi:!!:19807::::::
+chrony:!!:19807::::::
+setroubleshoot:!!:19807::::::
+saslauth:!!:19807::::::
+libstoragemgmt:!!:19807::::::
+sssd:!!:19807::::::
+cockpit-ws:!!:19807::::::
+cockpit-wsinstance:!!:19807::::::
+flatpak:!!:19807::::::
+colord:!!:19807::::::
+rpcuser:!!:19807::::::
+gdm:!!:19807::::::
+gnome-initial-setup:!!:19807::::::
+sshd:!!:19807::::::
+tcpdump:!!:19807::::::
+blueteam:$6$qZVumHB38o9dZDFr$wQtK./jYZrAx/JEwGGrutrSLUBlJfthiWgH5NMO/nug5eNU5cpluhNfFU6Jsj.q2KFzbleokSaGjIKe7Lo7IE1::0:99999:7:::
+postgres:!!:19820::::::
